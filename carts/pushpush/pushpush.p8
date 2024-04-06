@@ -4,12 +4,6 @@ __lua__
 
 -- todo
 
--- [x] fix camera rotation
--- [ ] add camera rotation anim
-
--- [x] do collision detection on player and cubes
--- currently just bumping a single cube...
-
 -- [ ] select stack of blocks
 -- [ ] shove entire stack of blocks
 -- [ ] shove all connected blocks of same colour
@@ -19,6 +13,16 @@ __lua__
 
 -- [ ] allow player to pickup stack of cubes
 -- [ ] allow player to drop on top of other stacks...
+
+-- [ ] add camera rotation anim // do in between math...
+
+-- log
+
+-- 24/04/04
+-- [x] fix camera rotation
+
+-- 24/04/03
+-- [x] do collision detection on player and cubes
 
 -->8
 -- main
@@ -83,7 +87,6 @@ function _init()
   end
 
   qsort(cubes, comp_screen_dist)
-  x = 'no'
   _upd_player = update_player
 end
 
@@ -150,14 +153,13 @@ end
 function update_player()
   for i = 0, 3 do
     if btnp(i) then
-      local dx, dy = dirx[i + 1], diry[i + 1]
-      local u, v = uv2d(dx, dy)
+      local dx, dy = camera_xy(dirx[i + 1], diry[i + 1])
+      -- flip controls when viewing from some directions (manual test)
       if (dir + 2) % 4 == 0 then
-        u = -u
-        v = -v
+        dx = -dx
+        dy = -dy
       end
-      log({ dir, dx, dy, u, v })
-      move_player(u, v)
+      move_player(dx, dy)
       return
     end
   end
@@ -190,20 +192,21 @@ function rotate_z(d)
   qsort(cubes, comp_screen_dist)
 end
 
-function uv2d(_x, _y)
+function camera_xy(_x, _y)
   local dirss = { _x, _y, -_x, -_y, _x }
+  -- only works when dir is 0,2,4,6 -- haven't implemented any tweening yet...
   return dirss[dir / 2 + 1], dirss[dir / 2 + 2]
 end
 
-function uvdist(a)
-  local au, av = uv2d(a.x + a.ox / 4, a.y + a.oy / 4)
+function camera_dist_xy(a)
+  local au, av = camera_xy(a.x + a.ox / 4, a.y + a.oy / 4)
   return au - av
 end
 
 -- comparison by distance to camera
 function comp_screen_dist(a, b)
-  ad = uvdist(a)
-  bd = uvdist(b)
+  local ad, bd = camera_dist_xy(a), camera_dist_xy(b)
+
   if ad == bd then
     if a.z == b.z then
       return a.c < b.c
@@ -217,7 +220,7 @@ end
 function v2d(x, y, z)
   local p = {}
   if dir % 2 == 0 then
-    local u, v = uv2d(x, y)
+    local u, v = camera_xy(x, y)
     p.x = 64 + (u + v - 1) * world.ux
     p.y = 64 + (u - v - 1) * world.uy - z * world.uz
   elseif ld == 1 then
@@ -262,7 +265,7 @@ function _draw()
   f = flr(t / 2.5)
   rectfill(0, 0, 127, 127, 1)
   rectfill(1, 1, 126, 126, 0)
-  pd = false
+  local pd = false
 
   for i = -4, 4 do
     for j = -4, 4 do
@@ -303,12 +306,16 @@ end
 -->8
 -- tools
 
+-- given ani as a table of spr indices, return the "current" one based on frame & time
 function getframe(ani)
   return ani[flr(t / 2.5) % #ani + 1]
 end
 
 debug = {}
+debug_count = 1
+
 function log(_text)
+  debug_count += 1
   if #debug > 2 then
     local v = debug[1]
     del(debug, v)
@@ -318,9 +325,9 @@ function log(_text)
 end
 
 function draw_debug()
-  for p, d in pairs(debug) do
-    print(p, 0, 80 + p * 10, 9)
-    print(d, 30, 80 + p * 10, 9)
+  for _count, _text in pairs(debug) do
+    print(debug_count - 2 + _count, 0, 80 + _count*10, 8)
+    print(_text, 25, 80 + _count * 10, 9)
   end
 end
 
@@ -376,22 +383,24 @@ end
 -->8
 -- inspect
 do
-  local function qsort(t, f, l, r)
-    if r - l < 1 then return end
-    local p = l
-    for i = l + 1, r do
-      if f(t[i], t[p]) then
-        if i == p + 1 then
-          t[p], t[p + 1] = t[p + 1], t[p]
-        else
-          t[p], t[p + 1], t[i] = t[i], t[p], t[p + 1]
-        end
-        p = p + 1
-      end
-    end
-    qsort(t, f, l, p - 1)
-    qsort(t, f, p + 1, r)
-  end
+  -- commented out qsort as I have it defined globally...
+  -- could be that this implementation is better/worse in some way? so much smaller...
+  -- local function qsort(t, f, l, r)
+  --   if r - l < 1 then return end
+  --   local p = l
+  --   for i = l + 1, r do
+  --     if f(t[i], t[p]) then
+  --       if i == p + 1 then
+  --         t[p], t[p + 1] = t[p + 1], t[p]
+  --       else
+  --         t[p], t[p + 1], t[i] = t[i], t[p], t[p + 1]
+  --       end
+  --       p = p + 1
+  --     end
+  --   end
+  --   qsort(t, f, l, p - 1)
+  --   qsort(t, f, p + 1, r)
+  -- end
 
   local typew = {
     number = 1, boolean = 2, string = 3,
@@ -410,14 +419,14 @@ do
         and ta < tb or wa < wb
   end
 
-  local function getkeys(t)
+  local function getkeys(_t)
     local slen = 0
-    while t[slen + 1] ~= nil do
+    while _t[slen + 1] ~= nil do
       slen = slen + 1
     end
 
     local keys, klen = {}, 0
-    for k, _ in next, t do
+    for k, _ in next, _t do
       klen = klen + 1
       keys[klen] = k
     end
@@ -442,9 +451,9 @@ do
   local function getid(x, ids)
     local id = ids[x]
     if not id then
-      local t = type(x)
-      id = (ids[t] or 0) + 1
-      ids[t], ids[x] = id, id
+      local _t = type(x)
+      id = (ids[_t] or 0) + 1
+      ids[_t], ids[x] = id, id
     end
     return id
   end
