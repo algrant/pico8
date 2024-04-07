@@ -179,6 +179,8 @@ function update_player()
 end
 
 function _update60()
+  -- rotate indefinitely
+  -- if t%8 == 0 then rotate_z(1) end
   _upd_player()
   if btnp(4) then
     rotate_z(1)
@@ -232,7 +234,7 @@ end
 
 -- {spr, xx, yx, xy, yy, zy, flip}
 render_params = {
-  [0] = { 192,  6, 6, 3, -3, -6, false },
+  [0] = { 192, 6, 6, 3, -3, -6, false },
         { 196, 3, 8, 3, -2, -6, false }, --1
         { 198, 9, 0, 0, -4, -6, false }, --2
         { 196, 8, 3, 2, -3, -6, true },  --3
