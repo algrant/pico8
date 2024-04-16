@@ -1,0 +1,31 @@
+# pipedream clone
+
+not exactly sure what I want to do next; so far just built the simulation aspect
+
+## todo
+ * sources - aka taps with countdown
+ * sinks...
+ * spills
+ * gameplay...
+
+## ideas
+ * board starts with sources, sinks, blockers and "bonuses" (things to pass through)
+ * player control
+    * one at a time
+        * see the feed of upcoming pipes (like tetris)
+        * store one or maybe cycle through N pipes
+        * start with blank board (other than sources, sinks, blockers & bonuses)
+        * controls
+            * dpad -- update loc of current piece
+            * a - cycle/swap piece with stored piece(s)
+            * b - place
+        * placed pieces can never be moved
+    * shuffle
+        * board starts filled of random pipes (as well as sources, sinks, blockers & bonuses)
+        * store one or maybe cycle through N pipes
+        * controls
+            * dpad -- move selector
+            * a -- cycle/swap piece with stored piece
+            * b -- rotate piece?
+
+
