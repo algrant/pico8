@@ -49,8 +49,9 @@ end
 
 local black, dark_blue, dark_purple, dark_green, brown, dark_grey, light_grey, white, red, orange, yellow, green, blue, lavender, pink, light_peach = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 
-ppal = {
+liquid_palettes = {
   -- pipe outline, pipe interior, liquid main, liquid low, liquid dark
+  [0] = { [5] = black }, -- fixes black outlines... should come up with better way for this...
   { [11] = green, [3] = dark_green, [5] = black, [6] = light_grey },
   { [11] = blue, [3] = dark_blue, [5] = black, [6] = light_grey },
   { [11] = red, [3] = dark_purple, [5] = black, [6] = light_grey },
@@ -59,10 +60,13 @@ ppal = {
 }
 new_pipe = function(type, x, y, rot, vel, fill, flows)
   type = type or pipe_types.lr
+  x = x or 1
+  y = y or 1
   return {
     type = type or pipe_types.lr,
-    x = x or 1,
-    y = y or 1,
+    x = x,
+    y = y,
+    loc = loc_hash(x, y),
     rot = rot or 0,
     fill = fill or 0, -- how full is our flow (0,16)
     vel = vel or 1,
@@ -83,7 +87,7 @@ new_pipe = function(type, x, y, rot, vel, fill, flows)
       return false
     end,
     draw = function(self)
-      pal(ppal[self.col])
+      pal(liquid_palettes[self.col])
       local rots = { rot }
       -- add a rotated version of the pipe when necessary
       if self.type.double != nil then
@@ -151,18 +155,13 @@ new_pipe = function(type, x, y, rot, vel, fill, flows)
 
       return false
     end,
-    neighbors = function(self)
-      local xs = { -1, 1, 0, 0 }
-      local ys = { 0, 0, -1, 1 }
-      local opp_dir = { 2, 1, 4, 3 }
+    neighbors = function(self) -- { loc, dir, col }
       out = {}
       for i in all(self.type.inlets[self.rot]) do
-        log({ loc_hash(self.x + xs[i], self.y + ys[i]), opp_dir[i], 1 })
-
         if self.flows[i] == nil then
           -- this needs work...
           local col = 1
-          add(out, { loc_hash(self.x + xs[i], self.y + ys[i]), opp_dir[i], self.col })
+          add(out, { add_dir(self.loc, i), opp_dir(i), self.col })
         end
       end
       return out
@@ -171,6 +170,16 @@ new_pipe = function(type, x, y, rot, vel, fill, flows)
 end
 loc_hash = function(x, y) return x + y * 32 end
 
+add_dir = function(loc, dir)
+  local xs = { -1, 1, 0, 0 }
+  local ys = { 0, 0, -1, 1 }
+  return loc + xs[dir] + ys[dir]* 32
+end
+
+opp_dir = function(dir)
+  local ods = { 2, 1, 4, 3}
+  return ods[dir]
+end
 add_pipe = function(pipe)
   pipes[loc_hash(pipe.x, pipe.y)] = pipe
 end
@@ -207,8 +216,81 @@ for y = 1, 7 do
   end
 end
 
-pipes[loc_hash(0, 1)]:add_flow(1, ceil(rnd(#ppal)))
-pipes[loc_hash(7, 7)]:add_flow(2, ceil(rnd(#ppal)))
+pipes[loc_hash(0, 1)]:add_flow(1, ceil(rnd(#liquid_palettes)))
+pipes[loc_hash(7, 7)]:add_flow(2, ceil(rnd(#liquid_palettes)))
+frame = 0
+
+
+new_source = function(x,y,dir,col, count)
+  x = x or 0
+  y = y or 0
+  return {
+    x = x,
+    y = y,
+    loc = loc_hash(x, y),
+    dir = dir or 1,
+    col = col or 1,
+    count = count or 16,
+    update = function(self)
+      if frame%5 == 0 then
+        count -= 1
+      end
+    end,
+    draw = function(self)
+      -- set palette for this
+      pal(liquid_palettes[self.col])
+      local os = (flr(frame/2.5)%3)*2
+      local bos = self.dir*2 - 2
+      local x,y = self.x*16, self.y*16
+
+      local poxs = { 0, 4, 2, 2}
+      local poys = { 0, 0, 2, -2}
+      local pox,poy = poxs[self.dir], poys[self.dir]
+
+      if count > 0 then
+        -- background bottle
+        spr(128 + bos, x, y, 2, 2)
+
+        -- liquid
+        clip(x  + pox,y+count + poy,12,12)
+        spr(162 + os, x + pox, y + poy, 2, 2)
+        clip()
+
+        -- closed overlay bottle
+        spr(224 + bos, x, y, 2, 2)
+
+        -- prop
+        spr(136, x + pox, y + poy, 2, 2)
+
+        -- print(count, self.x + 3, self.y + 5, 0)
+      else
+        -- bg bottle
+        spr(128 + bos, x, y, 2, 2)
+        -- liquid
+        spr(162 + os, x + pox, y + poy, 2, 2)
+        -- prop
+        spr(136 + os, x + pox, y + poy, 2, 2)
+        -- overlay bottle
+        spr(192 + bos, x, y, 2, 2)
+      end
+    end,
+    neighbors = function(self) -- {{ loc, dir, col }}
+      return {{ add_dir(self.loc, self.dir), opp_dir(self.dir), self.col }}
+    end
+  }
+end
+
+sources = {
+  new_source(0,0,1,1,max(16, flr(rnd(26)))),
+  new_source(2,0,2,2,max(16, flr(rnd(26)))),
+  new_source(1,0,3,3,max(16, flr(rnd(26)))),
+  new_source(3,0,4,4,max(16, flr(rnd(26)))),
+  new_source(4,0,1,5,max(16, flr(rnd(26)))),
+  new_source(5,0,3,3,max(16, flr(rnd(26)))),
+  new_source(6,0,2,1,max(16, flr(rnd(26)))),
+  new_source(7,0,4,5,max(16, flr(rnd(26)))),
+}
+
 
 function init_some_pipes()
   for type in all(ordered_types) do
@@ -231,22 +313,29 @@ function init_some_pipes()
 end
 
 function _init()
-  curr_ppal = rnd(ppal)
-  --ppal[rnd({"red", "green", "blue"})]
-  pal(curr_ppal)
+  curr_liquid_palettes = rnd(liquid_palettes)
+  --liquid_palettes[rnd({"red", "green", "blue"})]
+  pal(curr_liquid_palettes)
 end
 function _draw()
+  pal({[5] = 0})
   rectfill(0, 0, 128, 128, 7)
 
+  for source in all(sources) do
+    source:draw()
+  end
   for loc, pipe in pairs(pipes) do
     pipe:draw()
   end
 end
 
 function _update()
-  if btnp(5) then pal(rnd(ppal)) end
-
-  for loc, pipe in pairs(pipes) do
+  frame += 1
+  if btnp(5) then pal(rnd(liquid_palettes)) end
+  for source in all(sources) do
+    source:update()
+  end
+  for _, pipe in pairs(pipes) do
     if pipe:update() then
       -- pipe overflowed, start flow in neighbours
       for n in all(pipe:neighbors()) do
