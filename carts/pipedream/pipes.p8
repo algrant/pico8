@@ -76,7 +76,6 @@ new_pipe = function(type, x, y, rot, vel, fill, flows)
     add_flow = function(self, dir, col)
       -- handle already having flow / not having an inlet
       for i in all(self.type.inlets[self.rot]) do
-        printh("wtf" .. i, "log")
         if i == dir then
           self.flows[dir] = col
           self.col = col
@@ -148,7 +147,6 @@ new_pipe = function(type, x, y, rot, vel, fill, flows)
           self.fill = min(16, self.fill + self.vel)
         elseif self.fill == 16 then
           self.fill = 17
-          log("ok")
           return true -- outlets which are now triggering..?
         end
       end
@@ -169,11 +167,11 @@ new_pipe = function(type, x, y, rot, vel, fill, flows)
   }
 end
 loc_hash = function(x, y) return x + y * 32 end
+dir_x = { -1, 1, 0, 0 }
+dir_y = { 0, 0, -1, 1 }
 
 add_dir = function(loc, dir)
-  local xs = { -1, 1, 0, 0 }
-  local ys = { 0, 0, -1, 1 }
-  return loc + xs[dir] + ys[dir]* 32
+  return loc + dir_x[dir] + dir_y[dir]* 32
 end
 
 opp_dir = function(dir)
@@ -292,6 +290,59 @@ sources = {
 }
 
 
+new_spill = function(x,y,dir,col)
+  return {
+    x = x or 0,
+    y = y or 0,
+    dir = dir or 1,
+    col = col or 1,
+    drips = {},
+    init = function(self)
+      for i = 1,25 do
+        self:add_drip(i)
+      end
+    end,
+    add_drip = function(self, i)
+      i = i or 10
+      add(self.drips, {
+        x = self.x*16 + 8 + 8*dir_x[self.dir],
+        y = self.y*16 + 8 + 8*dir_y[self.dir],
+        ox = rnd(1),
+        oy = rnd(1),
+        dx = -(1 + rnd(3))*dir_x[self.dir]*i/25 + rnd(2) - 1,
+        dy = -(1 + rnd(3))*dir_y[self.dir]*i/25 + rnd(2) - 1,
+        age = rnd(100),
+        maxs = 2 + rnd(3),
+        s = 0,
+        col = rnd({self.col[11], self.col[11] ,  self.col[11], self.col[3] })
+      })
+    end,
+    update = function(self)
+      for drip in all(self.drips) do
+        if drip.age < 100 then
+          drip.age += 1
+          drip.dx = drip.dx/1.2
+          drip.dy = drip.dy/1.2
+          drip.x += drip.dx
+          drip.y += drip.dy
+          drip.age += 1
+          drip.s = drip.maxs*drip.age/100
+        end
+      end
+    end,
+    draw = function(self)
+      local fg, bg = self.col[11], self.col[3]
+
+      for drip in all(self.drips) do
+        circfill(drip.x + drip.ox, drip.y + drip.oy, drip.s + 0.5, bg)
+
+        circfill(drip.x, drip.y, drip.s, fg)
+      end
+    end
+  }
+end
+spills = {}
+
 function init_some_pipes()
   for type in all(ordered_types) do
     y += 1
@@ -316,11 +367,16 @@ function _init()
   curr_liquid_palettes = rnd(liquid_palettes)
   --liquid_palettes[rnd({"red", "green", "blue"})]
   pal(curr_liquid_palettes)
+  for s in all(spills) do
+    s:init()
+  end
 end
 function _draw()
   pal({[5] = 0})
   rectfill(0, 0, 128, 128, 7)
-
+  for s in all(spills) do
+    s:draw()
+  end
   for source in all(sources) do
     source:draw()
   end
@@ -332,6 +388,9 @@ end
 function _update()
   frame += 1
   if btnp(5) then pal(rnd(liquid_palettes)) end
+  for s in all(spills) do
+    s:update()
+  end
   for source in all(sources) do
     source:update()
   end
@@ -340,9 +399,10 @@ function _update()
       -- pipe overflowed, start flow in neighbours
       for n in all(pipe:neighbors()) do
         local nloc, dir, col = n[1], n[2], n[3]
-        if pipes[nloc] != nil then
-          -- add_flow should fail...
-          pipes[nloc]:add_flow(dir, col)
+        if pipes[nloc] == nil or not pipes[nloc]:add_flow(dir, col) then
+          local x = new_spill(nloc%32, flr(nloc/32), dir, liquid_palettes[col])
+          x:init()
+          add(spills, x)
         end
       end
     end
