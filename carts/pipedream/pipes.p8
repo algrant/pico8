@@ -364,9 +364,6 @@ function init_some_pipes()
 end
 
 function _init()
-  curr_liquid_palettes = rnd(liquid_palettes)
-  --liquid_palettes[rnd({"red", "green", "blue"})]
-  pal(curr_liquid_palettes)
   for s in all(spills) do
     s:init()
   end
