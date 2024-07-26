@@ -1,0 +1,23 @@
+
+
+Every level goes up to - 100 "meters"
+
+Charlie starts @0 and can move forward / backwards along track - camera snaps to charlie
+
+Background moves to meet charlie's position up until end of the track...
+
+
+
+sign_markers = []...
+
+screen_width = 128
+track_length = screen_width * 10
+
+-- charlie is walking from pixel 0 to track_length;
+
+charlie_pos
+camera_pos = max(charlie_pos - 20, screen_width)
+
+    until charlie approaches end of the track
+
+charlie.x
