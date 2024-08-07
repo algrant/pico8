@@ -4,7 +4,7 @@ __lua__
 
 -- Initialize the game state
 function _init()
-    player_colors = {6, 8} -- Default colors
+    player_colors = {3, 12} -- Default colors
     selected_color = 1
     init_start_screen()
 end
