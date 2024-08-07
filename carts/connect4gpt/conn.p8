@@ -11,6 +11,8 @@ end
 
 function init_start_screen()
     start_screen = true
+    menu_option = 1 -- Current selected menu option
+    max_menu_option = 3
 end
 
 function init_game_play()
@@ -62,16 +64,38 @@ function Particle:draw()
     circfill(self.x, self.y, self.size, self.color)
 end
 
+function get_menu_text(option)
+    if option == 1 then
+        return "player 1 color: " .. player_colors[1]
+    elseif option == 2 then
+        return "player 2 color: " .. player_colors[2]
+    elseif option == 3 then
+        return "start game"
+    end
+end
+
+function get_menu_color(option)
+    if option == 3 then
+        return 7
+    else
+        return player_colors[option]
+    end
+end
+
 -- Draw the start screen
 function draw_start_screen()
     cls()
-    print("CONNECT 4", 30, 20, 7)
-    print("PRESS X TO START", 20, 50, 7)
-    print("SELECT PLAYER COLORS:", 20, 80, 7)
-    print("1: RED / 2: YELLOW", 20, 100, 7)
-    print("CURRENT PLAYER 1 COLOR: " .. player_colors[1], 20, 110, player_colors[1])
-    print("CURRENT PLAYER 2 COLOR: " .. player_colors[2], 20, 120, player_colors[2])
-    print("PRESS LEFT/RIGHT TO CHANGE COLORS", 20, 150, 7)
+    print("connect 4", 30, 20, 7)
+
+    -- Draw menu options
+    for i=1,max_menu_option do
+        local y = 40 + (i-1) * 20
+        if i == menu_option then
+            print("> " .. get_menu_text(i), 20, y, get_menu_color(i))
+        else
+            print("  " .. get_menu_text(i), 20, y, get_menu_color(i))
+        end
+    end
 end
 
 -- Draw the board and pieces
@@ -129,10 +153,10 @@ function _draw()
 
     -- Display the current player's turn or the winner
     if not game_over then
-        print("Player " .. current_player .. "'s turn", 10, 110, 7)
+        print("player " .. current_player .. "'s turn", 10, 110, 7)
     else
-        print("Player " .. winner .. " wins!", 10, 110, 7)
-        print("PRESS X TO RESTART", 10, 120, 7)
+        print("player " .. winner .. " wins!", 10, 110, 7)
+        print("press x to restart", 10, 120, 7)
     end
 end
 
@@ -197,19 +221,23 @@ end
 -- Update the animation and game state
 function _update()
     if start_screen then
-        -- Player color selection
-        if btnp(4) then
-            init_game_play() -- Initialize game state
+        -- Navigate menu
+        if btnp(2) then menu_option = max(1, menu_option - 1) end
+        if btnp(3) then menu_option = min(max_menu_option, menu_option + 1) end
+        -- Select menu option
+        if menu_option == 1 or menu_option == 2 then
+            -- Change colors for player 1 or player 2
+            local color_index = menu_option
+            if btnp(0) then
+                player_colors[color_index] = (player_colors[color_index] % 15) + 1
+            end
+            if btnp(1) then
+                player_colors[color_index] = (player_colors[color_index] % 15) - 1
+            end
         end
 
-        -- Change colors for player 1
-        if btnp(2) then
-            player_colors[1] = (player_colors[1] % 15) + 1
-        end
-
-        -- Change colors for player 2
-        if btnp(3) then
-            player_colors[2] = (player_colors[2] % 15) + 1
+        if btnp(4) and menu_option == 3 then
+            init_game_play() -- Start the game
         end
 
         return
