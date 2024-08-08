@@ -1,0 +1,284 @@
+pico-8 cartridge // http://www.pico-8.com
+version 42
+__lua__
+-- Constants
+grid_size = 5
+cell_size = 16
+p1_color = 8 -- player 1 color
+p2_color = 9 -- player 2 color
+
+-- Board and pieces
+board = {}
+pieces = {}
+
+-- Card definitions
+cards = {
+    {name = "tiger", moves = {{0, -2}, {0, 1}}},
+    {name = "dragon", moves = {{-2, 1}, {2, 1}, {-1, -1}, {1, -1}}},
+    {name = "frog", moves = {{-2, 0}, {-1, 1}, {1, -1}}},
+    {name = "rabbit", moves = {{2, 0}, {1, 1}, {-1, -1}}},
+    {name = "crab", moves = {{-2, 0}, {2, 0}, {0, 1}}},
+    -- More cards can be added here
+}
+
+-- Players' cards
+p1_cards = {1, 2} -- Player 1 starts with cards Tiger and Dragon
+p2_cards = {3, 4} -- Player 2 starts with cards Frog and Rabbit
+center_card = 5   -- Crab card is the center card
+
+selected_piece = nil
+selected_card = 1
+cursor_x = 1
+cursor_y = 1
+current_player = 1
+game_over = false
+winner = nil
+
+-- Initialize the board and pieces
+function init_board()
+    for x = 1, grid_size do
+        board[x] = {}
+        for y = 1, grid_size do
+            board[x][y] = 0 -- Empty cell
+        end
+    end
+
+    -- Player 1 pieces
+    pieces[1] = {type = 'master', x = 3, y = 1, player = 1}
+    pieces[2] = {type = 'pawn', x = 1, y = 1, player = 1}
+    pieces[3] = {type = 'pawn', x = 2, y = 1, player = 1}
+    pieces[4] = {type = 'pawn', x = 4, y = 1, player = 1}
+    pieces[5] = {type = 'pawn', x = 5, y = 1, player = 1}
+
+    -- Player 2 pieces
+    pieces[6] = {type = 'master', x = 3, y = 5, player = 2}
+    pieces[7] = {type = 'pawn', x = 1, y = 5, player = 2}
+    pieces[8] = {type = 'pawn', x = 2, y = 5, player = 2}
+    pieces[9] = {type = 'pawn', x = 4, y = 5, player = 2}
+    pieces[10] = {type = 'pawn', x = 5, y = 5, player = 2}
+end
+
+-- Draw the board
+function draw_board()
+    for x = 1, grid_size do
+        for y = 1, grid_size do
+            colour = (x + y%2)%2 == 1 and 7 or 5
+            rectfill((x-1) * cell_size, (y-1) * cell_size, x * cell_size - 1, y * cell_size - 1, colour)
+        end
+    end
+end
+
+-- Draw the pieces
+function draw_pieces()
+    for i = 1, #pieces do
+        local p = pieces[i]
+        local color = p.player == 1 and p1_color or p2_color
+        circfill((p.x-1) * cell_size + cell_size/2, (p.y-1) * cell_size + cell_size/2, 6, color)
+        if p.type == 'master' then
+            circ((p.x-1) * cell_size + cell_size/2, (p.y-1) * cell_size + cell_size/2, 4, 0)
+        end
+    end
+end
+
+-- Draw the cards
+function draw_cards()
+    local y_offset = 80
+    for i = 1, 2 do
+        local card = cards[p1_cards[i]]
+        print(card.name, 10, y_offset + (i-1) * 10, 8)
+    end
+
+    for i = 1, 2 do
+        local card = cards[p2_cards[i]]
+        print(card.name, 100, y_offset + (i-1) * 10, 9)
+    end
+
+    local center = cards[center_card]
+    print(center.name, 60, y_offset + 20, 7)
+end
+
+-- Draw the cursor on the board
+function draw_cursor()
+    rect(cursor_x * cell_size - cell_size, cursor_y * cell_size - cell_size, cursor_x * cell_size - 1, cursor_y * cell_size - 1, 10)
+end
+
+-- Check if a move is valid
+function is_valid_move(piece, card, dx, dy)
+    local nx = piece.x + dx
+    local ny = piece.y + dy
+
+    if nx < 1 or nx > grid_size or ny < 1 or ny > grid_size then
+        return false
+    end
+
+    -- Check if the destination cell is occupied by a friendly piece
+    for i = 1, #pieces do
+        if pieces[i].x == nx and pieces[i].y == ny and pieces[i].player == piece.player then
+            return false
+        end
+    end
+
+    return true
+end
+
+-- Move the selected piece
+function move_piece(piece, card_index)
+    local card = cards[card_index]
+
+    -- Loop through card moves to find a valid one
+    for i = 1, #card.moves do
+        local dx, dy = card.moves[i][1], card.moves[i][2]
+
+        -- Adjust movement based on player
+        if piece.player == 2 then
+            dx = -dx
+            dy = -dy
+        end
+
+        if is_valid_move(piece, card, dx, dy) then
+            -- Update the piece's position
+            piece.x = piece.x + dx
+            piece.y = piece.y + dy
+
+            -- Swap the used card with the center card
+            if current_player == 1 then
+                p1_cards[card_index] = center_card
+            else
+                p2_cards[card_index] = center_card
+            end
+            center_card = card_index
+
+            -- Switch turns
+            current_player = 3 - current_player
+            return
+        end
+    end
+end
+
+-- Select a piece to move
+function select_piece_at_cursor()
+    for i = 1, #pieces do
+        local p = pieces[i]
+        if p.x == cursor_x and p.y == cursor_y and p.player == current_player then
+            selected_piece = p
+            return
+        end
+    end
+    selected_piece = nil
+end
+
+-- Move the cursor
+function move_cursor(dx, dy)
+    cursor_x = mid(1, cursor_x + dx, grid_size)
+    cursor_y = mid(1, cursor_y + dy, grid_size)
+end
+
+-- Select the card to use
+function select_card(direction)
+    selected_card = mid(1, selected_card + direction, 2)
+end
+
+-- Execute the player's move
+function execute_move()
+    if selected_piece then
+        move_piece(selected_piece, selected_card)
+        selected_piece = nil
+    end
+end
+
+-- Victory Conditions
+function check_victory()
+    for i = 1, #pieces do
+        local p = pieces[i]
+        if p.type == 'master' then
+            -- Check if a master is captured
+            if p.x == cursor_x and p.y == cursor_y and p.player ~= current_player then
+                game_over = true
+                winner = current_player
+                return true
+            end
+            -- Check if the master reached the opponent's starting position
+            if p.player == 1 and p.y == grid_size then
+                game_over = true
+                winner = 1
+                return true
+            elseif p.player == 2 and p.y == 1 then
+                game_over = true
+                winner = 2
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- Reset the game
+function reset_game()
+    game_over = false
+    winner = nil
+    selected_piece = nil
+    cursor_x = 1
+    cursor_y = 1
+    current_player = 1
+    p1_cards = {1, 2}
+    p2_cards = {3, 4}
+    center_card = 5
+    init_board()
+end
+
+-- Display the game-over screen
+function draw_game_over()
+    cls()
+    print("Player " .. winner .. " wins!", 40, 50, 7)
+    print("Press X to restart", 30, 70, 7)
+end
+
+-- Update function
+function _update()
+    if game_over then
+        if btnp(5) then -- X button to restart
+            reset_game()
+        end
+    else
+        if btnp(0) then move_cursor(-1, 0) end -- left
+        if btnp(1) then move_cursor(1, 0) end  -- right
+        if btnp(2) then move_cursor(0, -1) end -- up
+        if btnp(3) then move_cursor(0, 1) end  -- down
+
+        if btnp(4) then select_piece_at_cursor() end -- O button to select piece
+        if btnp(5) then execute_move() end           -- X button to execute move
+        if btnp(6) then select_card(-1) end          -- left arrow to change card
+        if btnp(7) then select_card(1) end           -- right arrow to change card
+
+        if check_victory() then
+            game_over = true
+        end
+    end
+end
+
+-- Draw function
+function _draw()
+    if game_over then
+        draw_game_over()
+    else
+        cls()
+        draw_board()
+        draw_pieces()
+        draw_cursor()
+        draw_cards()
+
+        -- Highlight selected card
+        local y_offset = 80 + (selected_card-1) * 10
+        rect(8, y_offset - 1, 48, y_offset + 7, 7)
+
+        -- Highlight selected piece
+        if selected_piece then
+            rect(selected_piece.x * cell_size - cell_size, selected_piece.y * cell_size - cell_size, selected_piece.x * cell_size - 1, selected_piece.y * cell_size - 1, 11)
+        end
+    end
+end
+
+-- Initialization
+function _init()
+    init_board()
+end
