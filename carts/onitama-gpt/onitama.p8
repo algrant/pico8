@@ -78,8 +78,27 @@ function draw_pieces()
             circ((p.x-1) * cell_size + cell_size/2, (p.y-1) * cell_size + cell_size/2, 4, 0)
         end
     end
-end
 
+    -- Highlight available move positions
+    if selected_piece then
+        local card = cards[selected_card]
+        for i = 1, #card.moves do
+            local dx, dy = card.moves[i][1], card.moves[i][2]
+            if selected_piece.player == 2 then
+                dx = -dx
+                dy = -dy
+            end
+            local nx = selected_piece.x + dx
+            local ny = selected_piece.y + dy
+            if nx >= 1 and nx <= grid_size and ny >= 1 and ny <= grid_size then
+                -- Check if move is valid
+                if is_valid_move(selected_piece, card, dx, dy) then
+                    rectfill((nx-1) * cell_size, (ny-1) * cell_size, nx * cell_size - 1, ny * cell_size - 1, 10)
+                end
+            end
+        end
+    end
+end
 -- Draw the cards
 function draw_cards()
     local y_offset = 80
@@ -99,7 +118,7 @@ end
 
 -- Draw the cursor on the board
 function draw_cursor()
-    rect(cursor_x * cell_size - cell_size, cursor_y * cell_size - cell_size, cursor_x * cell_size - 1, cursor_y * cell_size - 1, 10)
+    rect(cursor_x * cell_size - cell_size, cursor_y * cell_size - cell_size, cursor_x * cell_size - 1, cursor_y * cell_size - 1, 11)
 end
 
 -- Check if a move is valid
@@ -256,7 +275,7 @@ function _update()
     end
 end
 
--- Draw function
+-- Add this to _draw() to ensure move highlights are shown
 function _draw()
     if game_over then
         draw_game_over()
