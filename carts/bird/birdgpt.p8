@@ -47,10 +47,12 @@ function draw_bird(bird)
     circfill(bird.x + bird.size/2, bird.y - bird.size/3, bird.size/5, 7)  -- Right eye
     circfill(bird.x + bird.size/4, bird.y - bird.size/3, bird.size/5, 0)  -- Left eye
 
-    -- Beak
+    -- Beak (using lines to form a triangle)
     local beak_x = bird.x + bird.size + 1
     local beak_y = bird.y
-    tri(beak_x, beak_y, beak_x + bird.size/3, beak_y - bird.size/6, beak_x + bird.size/3, beak_y + bird.size/6, 10)
+    line(beak_x, beak_y, beak_x + bird.size/3, beak_y - bird.size/6, 10)
+    line(beak_x, beak_y, beak_x + bird.size/3, beak_y + bird.size/6, 10)
+    line(beak_x + bird.size/3, beak_y - bird.size/6, beak_x + bird.size/3, beak_y + bird.size/6, 10)
 
     -- Feet
     local feet_y = bird.y + bird.size + 1
