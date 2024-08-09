@@ -1,10 +1,11 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
--- Bird Animation in Pico-8 with Eyes, Beak, and Feet
+-- Bird Animation in Pico-8 with Eyes, Beak, Feet, and Collision Avoidance
 
 -- Bird structure
 function create_bird()
+    local angle = rnd(1)
     return {
         x = -20,  -- Start off-screen
         y = rnd(120),  -- Random y position
@@ -12,6 +13,9 @@ function create_bird()
         speed = rnd(2) + 1,  -- Random speed
         wing_state = 0,  -- Wing animation state
         color = flr(rnd(15)) + 1,  -- Random color
+        angle = angle,  -- Initial flight angle
+        path_amplitude = rnd(20) + 10,  -- Amplitude of the flight path
+        path_frequency = rnd(0.05) + 0.05,  -- Frequency of the flight path
     }
 end
 
@@ -24,7 +28,23 @@ end
 -- Update bird animation
 function update_birds()
     for bird in all(birds) do
+        -- Calculate new position based on the sine wave
+        bird.angle += bird.path_frequency
+        bird.y += cos(bird.angle) * bird.path_amplitude * 0.1
         bird.x += bird.speed
+
+        -- Collision avoidance
+        for other_bird in all(birds) do
+            if other_bird != bird then
+                local dist = sqrt((bird.x - other_bird.x)^2 + (bird.y - other_bird.y)^2)
+                if dist < bird.size * 2 then
+                    -- Adjust position to avoid collision
+                    bird.y += (bird.y - other_bird.y) * 0.1
+                    bird.x += (bird.x - other_bird.x) * 0.1
+                end
+            end
+        end
+
         bird.wing_state = (bird.wing_state + bird.speed * 0.1) % 1
 
         -- Reset bird position when it goes off-screen
@@ -34,6 +54,9 @@ function update_birds()
             bird.size = rnd(2) + 4
             bird.speed = rnd(2) + 1
             bird.color = flr(rnd(15)) + 1
+            bird.angle = rnd(1)
+            bird.path_amplitude = rnd(20) + 10
+            bird.path_frequency = rnd(0.05) + 0.05
         end
     end
 end
