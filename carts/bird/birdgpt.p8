@@ -84,36 +84,45 @@ function draw_bird(bird)
     line(bird.x - bird.size/3, feet_y, bird.x - bird.size/3, feet_y + bird.size/2, bird.color)
     line(bird.x + bird.size/3, feet_y, bird.x + bird.size/3, feet_y + bird.size/2, bird.color)
 
-    -- Wings (4 different shapes based on bird.wing_type)
+    -- Replace the existing wing drawing code with this:
+    -- Wings (4 variations using arcs)
+
     if bird.wing_type == 1 then
-        -- Wing shape 1: Simple flapping lines
+        -- Wing shape 1: Larger arcs with more pronounced flapping
         local wing_offset = sin(bird.wing_state * 2) * bird.size
-        line(bird.x - wing_offset, bird.y - bird.size, bird.x + wing_offset, bird.y - bird.size, bird.color)
-        line(bird.x - wing_offset, bird.y + bird.size, bird.x + wing_offset, bird.y + bird.size, bird.color)
-    elseif bird.wing_type == 2 then
-        -- Wing shape 2: Curved bat-like wings
-        local wing_offset = sin(bird.wing_state * 2) * bird.size
-        for i=0,4 do
-            line(bird.x - wing_offset, bird.y - bird.size + i, bird.x + wing_offset, bird.y - bird.size + i, bird.color)
-            line(bird.x - wing_offset, bird.y + bird.size - i, bird.x + wing_offset, bird.y + bird.size - i, bird.color)
-        end
-    elseif bird.wing_type == 3 then
-        -- Wing shape 3: Flapping with arcs
-        local wing_offset = sin(bird.wing_state * 2) * bird.size
-        for i=0,2 do
-            local arc_offset = i * 2
-            circ(bird.x - wing_offset, bird.y - bird.size + arc_offset, 2, bird.color)
-            circ(bird.x + wing_offset, bird.y - bird.size + arc_offset, 2, bird.color)
-            circ(bird.x - wing_offset, bird.y + bird.size - arc_offset, 2, bird.color)
-            circ(bird.x + wing_offset, bird.y + bird.size - arc_offset, 2, bird.color)
-        end
-    elseif bird.wing_type == 4 then
-        -- Wing shape 4: Zigzag wings
-        local wing_offset = sin(bird.wing_state * 2) * bird.size
-        local zigzag_offset = 2
         for i=0,3 do
-            line(bird.x - wing_offset - zigzag_offset * i, bird.y - bird.size + i * 2, bird.x + wing_offset + zigzag_offset * i, bird.y - bird.size + i * 2, bird.color)
-            line(bird.x - wing_offset - zigzag_offset * i, bird.y + bird.size - i * 2, bird.x + wing_offset + zigzag_offset * i, bird.y + bird.size - i * 2, bird.color)
+            circ(bird.x - wing_offset, bird.y - bird.size + i * 2, 3 + i, bird.color)
+            circ(bird.x + wing_offset, bird.y - bird.size + i * 2, 3 + i, bird.color)
+            circ(bird.x - wing_offset, bird.y + bird.size - i * 2, 3 + i, bird.color)
+            circ(bird.x + wing_offset, bird.y + bird.size - i * 2, 3 + i, bird.color)
+        end
+
+    elseif bird.wing_type == 2 then
+        -- Wing shape 2: Smaller arcs with quick flapping motion
+        local wing_offset = sin(bird.wing_state * 4) * bird.size
+        for i=0,2 do
+            circ(bird.x - wing_offset, bird.y - bird.size + i * 3, 2 + i, bird.color)
+            circ(bird.x + wing_offset, bird.y - bird.size + i * 3, 2 + i, bird.color)
+            circ(bird.x - wing_offset, bird.y + bird.size - i * 3, 2 + i, bird.color)
+            circ(bird.x + wing_offset, bird.y + bird.size - i * 3, 2 + i, bird.color)
+        end
+
+    elseif bird.wing_type == 3 then
+        -- Wing shape 3: Arcs with varying sizes for a more dynamic look
+        local wing_offset = sin(bird.wing_state * 2) * bird.size
+        circ(bird.x - wing_offset, bird.y - bird.size, 4, bird.color)
+        circ(bird.x + wing_offset, bird.y - bird.size, 3, bird.color)
+        circ(bird.x - wing_offset, bird.y + bird.size, 4, bird.color)
+        circ(bird.x + wing_offset, bird.y + bird.size, 3, bird.color)
+
+    elseif bird.wing_type == 4 then
+        -- Wing shape 4: Overlapping arcs for a thicker wing effect
+        local wing_offset = sin(bird.wing_state * 2) * bird.size
+        for i=0,1 do
+            circ(bird.x - wing_offset + i, bird.y - bird.size + i * 2, 3 + i, bird.color)
+            circ(bird.x + wing_offset - i, bird.y - bird.size + i * 2, 3 + i, bird.color)
+            circ(bird.x - wing_offset + i, bird.y + bird.size - i * 2, 3 + i, bird.color)
+            circ(bird.x + wing_offset - i, bird.y + bird.size - i * 2, 3 + i, bird.color)
         end
     end
 end
