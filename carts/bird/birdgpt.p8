@@ -1,15 +1,14 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
-
--- Bird Animation in Pico-8
+-- Bird Animation in Pico-8 with Eyes, Beak, and Feet
 
 -- Bird structure
 function create_bird()
     return {
-        x = -10,  -- Start off-screen
+        x = -20,  -- Start off-screen
         y = rnd(120),  -- Random y position
-        size = rnd(2) + 1,  -- Random size (1-3)
+        size = rnd(2) + 4,  -- Random size (4-6)
         speed = rnd(2) + 1,  -- Random speed
         wing_state = 0,  -- Wing animation state
         color = flr(rnd(15)) + 1,  -- Random color
@@ -30,9 +29,9 @@ function update_birds()
 
         -- Reset bird position when it goes off-screen
         if bird.x > 130 then
-            bird.x = -10
+            bird.x = -20
             bird.y = rnd(120)
-            bird.size = rnd(2) + 1
+            bird.size = rnd(2) + 4
             bird.speed = rnd(2) + 1
             bird.color = flr(rnd(15)) + 1
         end
@@ -43,6 +42,20 @@ end
 function draw_bird(bird)
     -- Body
     circfill(bird.x, bird.y, bird.size, bird.color)
+
+    -- Eyes
+    circfill(bird.x + bird.size/2, bird.y - bird.size/3, bird.size/5, 7)  -- Right eye
+    circfill(bird.x + bird.size/4, bird.y - bird.size/3, bird.size/5, 0)  -- Left eye
+
+    -- Beak
+    local beak_x = bird.x + bird.size + 1
+    local beak_y = bird.y
+    tri(beak_x, beak_y, beak_x + bird.size/3, beak_y - bird.size/6, beak_x + bird.size/3, beak_y + bird.size/6, 10)
+
+    -- Feet
+    local feet_y = bird.y + bird.size + 1
+    line(bird.x - bird.size/3, feet_y, bird.x - bird.size/3, feet_y + bird.size/2, bird.color)
+    line(bird.x + bird.size/3, feet_y, bird.x + bird.size/3, feet_y + bird.size/2, bird.color)
 
     -- Wings (flapping effect)
     local wing_offset = sin(bird.wing_state * 2) * bird.size
