@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
--- Bird Animation in Pico-8 with Eyes, Beak, Feet, and Collision Avoidance
+-- Bird Animation in Pico-8 with Eyes, Beak, Feet, and Multiple Wing Shapes
 
 -- Bird structure
 function create_bird()
@@ -16,6 +16,7 @@ function create_bird()
         angle = angle,  -- Initial flight angle
         path_amplitude = rnd(20) + 10,  -- Amplitude of the flight path
         path_frequency = rnd(0.05) + 0.05,  -- Frequency of the flight path
+        wing_type = flr(rnd(4)) + 1,  -- Randomly choose a wing type (1 to 4)
     }
 end
 
@@ -57,6 +58,7 @@ function update_birds()
             bird.angle = rnd(1)
             bird.path_amplitude = rnd(20) + 10
             bird.path_frequency = rnd(0.05) + 0.05
+            bird.wing_type = flr(rnd(4)) + 1
         end
     end
 end
@@ -82,10 +84,38 @@ function draw_bird(bird)
     line(bird.x - bird.size/3, feet_y, bird.x - bird.size/3, feet_y + bird.size/2, bird.color)
     line(bird.x + bird.size/3, feet_y, bird.x + bird.size/3, feet_y + bird.size/2, bird.color)
 
-    -- Wings (flapping effect)
-    local wing_offset = sin(bird.wing_state * 2) * bird.size
-    line(bird.x - wing_offset, bird.y - bird.size, bird.x + wing_offset, bird.y - bird.size, bird.color)
-    line(bird.x - wing_offset, bird.y + bird.size, bird.x + wing_offset, bird.y + bird.size, bird.color)
+    -- Wings (4 different shapes based on bird.wing_type)
+    if bird.wing_type == 1 then
+        -- Wing shape 1: Simple flapping lines
+        local wing_offset = sin(bird.wing_state * 2) * bird.size
+        line(bird.x - wing_offset, bird.y - bird.size, bird.x + wing_offset, bird.y - bird.size, bird.color)
+        line(bird.x - wing_offset, bird.y + bird.size, bird.x + wing_offset, bird.y + bird.size, bird.color)
+    elseif bird.wing_type == 2 then
+        -- Wing shape 2: Curved bat-like wings
+        local wing_offset = sin(bird.wing_state * 2) * bird.size
+        for i=0,4 do
+            line(bird.x - wing_offset, bird.y - bird.size + i, bird.x + wing_offset, bird.y - bird.size + i, bird.color)
+            line(bird.x - wing_offset, bird.y + bird.size - i, bird.x + wing_offset, bird.y + bird.size - i, bird.color)
+        end
+    elseif bird.wing_type == 3 then
+        -- Wing shape 3: Flapping with arcs
+        local wing_offset = sin(bird.wing_state * 2) * bird.size
+        for i=0,2 do
+            local arc_offset = i * 2
+            circ(bird.x - wing_offset, bird.y - bird.size + arc_offset, 2, bird.color)
+            circ(bird.x + wing_offset, bird.y - bird.size + arc_offset, 2, bird.color)
+            circ(bird.x - wing_offset, bird.y + bird.size - arc_offset, 2, bird.color)
+            circ(bird.x + wing_offset, bird.y + bird.size - arc_offset, 2, bird.color)
+        end
+    elseif bird.wing_type == 4 then
+        -- Wing shape 4: Zigzag wings
+        local wing_offset = sin(bird.wing_state * 2) * bird.size
+        local zigzag_offset = 2
+        for i=0,3 do
+            line(bird.x - wing_offset - zigzag_offset * i, bird.y - bird.size + i * 2, bird.x + wing_offset + zigzag_offset * i, bird.y - bird.size + i * 2, bird.color)
+            line(bird.x - wing_offset - zigzag_offset * i, bird.y + bird.size - i * 2, bird.x + wing_offset + zigzag_offset * i, bird.y + bird.size - i * 2, bird.color)
+        end
+    end
 end
 
 -- Main loop
