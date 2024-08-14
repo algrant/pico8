@@ -10,8 +10,6 @@ skeleton = {}
 NUM_BONES = 2
 BONE_LENGTH = 5
 TORSO_LENGTH = 15
-ARM_LENGTH = BONE_LENGTH * NUM_BONES
-LEG_LENGTH = BONE_LENGTH * NUM_BONES
 
 -- Create a bone
 function create_bone(x, y, length, angle)
@@ -34,22 +32,22 @@ function create_skeleton(x, y)
 
     -- Arms
     s.left_arm = {
-        create_bone(x, y, BONE_LENGTH, -0.5),
-        create_bone(x - BONE_LENGTH, y - BONE_LENGTH, BONE_LENGTH, -1)
+        create_bone(x, y - 5, BONE_LENGTH, -0.5),
+        create_bone(0, 0, BONE_LENGTH, -1)  -- position will be updated in update function
     }
     s.right_arm = {
-        create_bone(x, y, BONE_LENGTH, 0.5),
-        create_bone(x + BONE_LENGTH, y - BONE_LENGTH, BONE_LENGTH, 1)
+        create_bone(x, y - 5, BONE_LENGTH, 0.5),
+        create_bone(0, 0, BONE_LENGTH, 1)  -- position will be updated in update function
     }
 
     -- Legs
     s.left_leg = {
         create_bone(x, y + TORSO_LENGTH, BONE_LENGTH, 0.5),
-        create_bone(x - BONE_LENGTH, y + TORSO_LENGTH + BONE_LENGTH, BONE_LENGTH, 1)
+        create_bone(0, 0, BONE_LENGTH, 1)  -- position will be updated in update function
     }
     s.right_leg = {
         create_bone(x, y + TORSO_LENGTH, BONE_LENGTH, -0.5),
-        create_bone(x + BONE_LENGTH, y + TORSO_LENGTH + BONE_LENGTH, BONE_LENGTH, -1)
+        create_bone(0, 0, BONE_LENGTH, -1)  -- position will be updated in update function
     }
 
     return s
@@ -60,6 +58,7 @@ function draw_bone(bone)
     local x2 = bone.x + cos(bone.angle) * bone.length
     local y2 = bone.y + sin(bone.angle) * bone.length
     line(bone.x, bone.y, x2, y2, 7)
+    return x2, y2
 end
 
 -- Draw the skeleton
@@ -73,20 +72,22 @@ function draw_skeleton(s)
     circfill(s.head.x, s.head.y, 3, 7)
 
     -- Draw arms
-    for bone in all(s.left_arm) do
-        draw_bone(bone)
-    end
-    for bone in all(s.right_arm) do
-        draw_bone(bone)
-    end
+    local x, y = draw_bone(s.left_arm[1])
+    s.left_arm[2].x, s.left_arm[2].y = x, y
+    draw_bone(s.left_arm[2])
+
+    x, y = draw_bone(s.right_arm[1])
+    s.right_arm[2].x, s.right_arm[2].y = x, y
+    draw_bone(s.right_arm[2])
 
     -- Draw legs
-    for bone in all(s.left_leg) do
-        draw_bone(bone)
-    end
-    for bone in all(s.right_leg) do
-        draw_bone(bone)
-    end
+    x, y = draw_bone(s.left_leg[1])
+    s.left_leg[2].x, s.left_leg[2].y = x, y
+    draw_bone(s.left_leg[2])
+
+    x, y = draw_bone(s.right_leg[1])
+    s.right_leg[2].x, s.right_leg[2].y = x, y
+    draw_bone(s.right_leg[2])
 end
 
 -- Animate skeleton (simple example)
