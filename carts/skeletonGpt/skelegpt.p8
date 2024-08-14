@@ -6,11 +6,11 @@ function _init()
     -- Initialize the ragdoll
     ragdoll = {
         bones = {
-            {p1 = {x=64, y=32}, p2 = {x=64, y=48}}, -- torso
-            {p1 = {x=64, y=48}, p2 = {x=60, y=64}}, -- left leg
-            {p1 = {x=64, y=48}, p2 = {x=68, y=64}}, -- right leg
-            {p1 = {x=64, y=32}, p2 = {x=60, y=24}}, -- left arm
-            {p1 = {x=64, y=32}, p2 = {x=68, y=24}}, -- right arm
+            {p1 = {x=64, y=32, vx=0, vy=0}, p2 = {x=64, y=48, vx=0, vy=0}}, -- torso
+            {p1 = {x=64, y=48, vx=0, vy=0}, p2 = {x=60, y=64, vx=0, vy=0}}, -- left leg
+            {p1 = {x=64, y=48, vx=0, vy=0}, p2 = {x=68, y=64, vx=0, vy=0}}, -- right leg
+            {p1 = {x=64, y=32, vx=0, vy=0}, p2 = {x=60, y=24, vx=0, vy=0}}, -- left arm
+            {p1 = {x=64, y=32, vx=0, vy=0}, p2 = {x=68, y=24, vx=0, vy=0}}, -- right arm
         },
         gravity = 0.2
     }
@@ -46,8 +46,8 @@ function update_bone(bone)
     local p2 = bone.p2
 
     -- Apply gravity
-    p1.vy = (p1.vy or 0) + ragdoll.gravity
-    p2.vy = (p2.vy or 0) + ragdoll.gravity
+    p1.vy = p1.vy + ragdoll.gravity
+    p2.vy = p2.vy + ragdoll.gravity
 
     -- Verlet integration
     local temp_x = p1.x
@@ -102,24 +102,24 @@ end
 function constrain_bones_to_scene()
     for bone in all(ragdoll.bones) do
         local p1, p2 = bone.p1, bone.p2
-        for b in all(blocks) do
-            if check_collision(p1, b) then
-                p1.vx, p1.vy = 0, 0
+        for p in all({p1, p2}) do
+            for b in all(blocks) do
+                if check_collision(p, b) then
+                    p.vx, p.vy = 0, 0
+                    if p.y > b.y then
+                        p.y = b.y + b.h
+                    else
+                        p.y = b.y
+                    end
+                end
             end
-            if check_collision(p2, b) then
-                p2.vx, p2.vy = 0, 0
-            end
-        end
 
-        -- Constrain to screen bounds
-        if p1.x < 10 then p1.x = 10 end
-        if p1.x > 118 then p1.x = 118 end
-        if p1.y < 10 then p1.y = 10 end
-        if p1.y > 118 then p1.y = 118 end
-        if p2.x < 10 then p2.x = 10 end
-        if p2.x > 118 then p2.x = 118 end
-        if p2.y < 10 then p2.y = 10 end
-        if p2.y > 118 then p2.y = 118 end
+            -- Constrain to screen bounds
+            if p.x < 10 then p.x = 10 end
+            if p.x > 118 then p.x = 118 end
+            if p.y < 10 then p.y = 10 end
+            if p.y > 118 then p.y = 118 end
+        end
     end
 end
 
