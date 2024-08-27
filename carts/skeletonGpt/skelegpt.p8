@@ -68,12 +68,12 @@ function StaticObject:check_collision(bone)
     local bx2 = max(bone.x, bone.px)
     local by2 = max(bone.y, bone.py)
 
-    return not bx2 < self.x1 or bx1 > self.x2 or by2 < self.y1 or by1 > self.y2
+    return not (bx2 < self.x1) or (bx1 > self.x2) or (by2 < self.y1) or (by1 > self.y2)
 end
 
 function init_scene()
     stairs = {}
-    for i = 0, 5 do
+    for i = 0,1 do
         add(
             stairs, StaticObject.create(
                 32 + i * 16, 96 - i * 16,
