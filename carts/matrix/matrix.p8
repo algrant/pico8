@@ -25,6 +25,7 @@ story_line = 1
 story_delay = 0
 story_active = false
 active_drops = {}
+flicker_duration = 10
 
 function init_drops()
     for i=1, 128 do
@@ -35,7 +36,7 @@ end
 function activate_story_drops(line)
     active_drops = {}
     for i=1, #line do
-        local drop = {char=sub(line, i, i), x=16+(i-1)*4, y=-flr(rnd(32)), target_y=64, speed=rnd(2)+1, active=true}
+        local drop = {char=sub(line, i, i), x=16+(i-1)*4, y=-flr(rnd(32)), target_y=64, speed=rnd(2)+1, active=true, flicker=flicker_duration}
         add(active_drops, drop)
     end
     story_active = true
@@ -59,14 +60,16 @@ function update_drops()
                 all_in_place = false
             else
                 drop.y = drop.target_y
+                drop.flicker -= 1
             end
         end
-        if all_in_place then
+        if all_in_place and active_drops[1].flicker <= 0 then
             story_delay += 1
             if story_delay > 50 then
                 for drop in all(active_drops) do
                     drop.speed = rnd(2)+1
                     drop.target_y = 128 + flr(rnd(32))
+                    drop.flicker = flicker_duration
                 end
                 story_delay = 0
                 story_active = false
@@ -82,10 +85,24 @@ end
 
 function draw_drops()
     for drop in all(drops) do
-        print(drop.char, drop.x, drop.y, 11)
+        local color = get_color(drop.y, false)
+        print(drop.char, drop.x, drop.y, color)
     end
     for drop in all(active_drops) do
-        print(drop.char, drop.x, drop.y, 7)
+        local color = get_color(drop.y, true, drop.flicker > 0)
+        print(drop.char, drop.x, drop.y, color)
+    end
+end
+
+function get_color(y, is_story, flicker)
+    if y < 42 or y > 85 then
+        return 11 -- light green
+    else
+        if flicker then
+            return is_story and 7 or 3 -- flicker to white for story, dark green for rain
+        else
+            return is_story and 7 or 3 -- consistent white for story, dark green for rain
+        end
     end
 end
 
