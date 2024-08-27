@@ -66,8 +66,6 @@ function update_drops()
     end
 
     if story_active then
-        printh("active", "log")
-        printh(count(active_drops), "log")
         local all_in_place = true
         for drop in all(active_drops) do
             if drop.y < drop.target_y then
@@ -79,14 +77,10 @@ function update_drops()
             end
         end
         if all_in_place and active_drops[1].flicker <= 0 then
-            printh("all_in_place & active_drops", "log")
-
             story_delay += 1
             if story_delay > 50 then
                 for drop in all(active_drops) do
-                    drop.speed = rnd(2)+1
-                    drop.target_y = 128 + flr(rnd(32))
-                    drop.flicker = flicker_duration
+                    drop.target_y = 128 + flr(rnd(32)) -- continue falling off the screen
                 end
                 story_delay = 0
                 story_active = false
