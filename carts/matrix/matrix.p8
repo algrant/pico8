@@ -65,35 +65,34 @@ function update_drops()
         end
     end
 
-    if story_active then
-        local all_in_place = true
-        for drop in all(active_drops) do
-            if drop.y < drop.target_y then
-                drop.y += drop.speed * 0.5
-                all_in_place = false
-            else
-                drop.y = drop.target_y
-                drop.flicker -= 1
+    local all_in_place = true
+    for drop in all(active_drops) do
+        if drop.y < drop.target_y then
+            drop.y += drop.speed * 0.5
+            all_in_place = false
+        else
+            drop.y = drop.target_y
+            if drop.y > 128 then
+                del(active_drops, drop)
             end
         end
-        if all_in_place and active_drops[1].flicker <= 0 then
-            story_delay += 1
-            if story_delay > 50 then
-                for drop in all(active_drops) do
-                    drop.target_y = 128 + flr(rnd(32)) -- continue falling off the screen
-                end
-                story_delay = 0
-                story_active = false
-                story_line += 1
-                if story_line > #story_lines then
-                    story_line = 1
-                end
+        drop.flicker -= 1
+    end
+
+    if story_active and all_in_place then
+        story_delay += 1
+        if story_delay > 50 then
+            for drop in all(active_drops) do
+                drop.target_y = 128 + flr(rnd(32))
             end
+            story_delay = 0
+            story_active = false
         end
-    else
-        if story_line <= #story_lines and #active_drops == 0 then
-            activate_story_drops(story_lines[story_line])
-        end
+    end
+
+    if not story_active and #active_drops == 0 and story_line <= #story_lines then
+        activate_story_drops(story_lines[story_line])
+        story_line += 1
     end
 end
 
