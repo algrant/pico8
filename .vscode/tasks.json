@@ -2,13 +2,14 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Pico-8 main.lua",
+      "label": "Run .p8 file in same folder (pico8)",
       "type": "shell",
-      "command": "/Applications/PICO-8.app/Contents/MacOS/pico8",  // Or Windows path
+      "command": "${workspaceFolder}/.vscode/run_p8_in_subfolder.sh",  // or .bat on Windows
       "args": [
-        "-run",
-        "${fileDirname}/main.p8"
+        "${fileDirname}"
       ],
+      "isBackground": true,
+      "problemMatcher": [],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -17,9 +18,8 @@
         "echo": true,
         "reveal": "always",
         "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": []
+        "panel": "dedicated"
+      }
     }
   ]
 }
