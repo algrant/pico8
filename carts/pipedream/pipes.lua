@@ -1,7 +1,3 @@
-pico-8 cartridge // http://www.pico-8.com
-version 42
-__lua__
-
 pipe_types = {
   straight = {
     sprs = { 1, 3, 1, 3 },

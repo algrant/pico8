@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
 -- game
-#include pipes.p8
+#include pipes.lua
 
 -->8
 -- utils
